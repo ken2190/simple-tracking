@@ -28,7 +28,7 @@ net = cv2.dnn.readNetFromTensorflow(weightsPath, configPath)
 
 # Iniciamos la captura del video
 vs = cv2.VideoCapture("videos/Berlin.mp4")
-fps = vs.get(cv2.cv.CV_CAP_PROP_FPS)
+fps = vs.get(cv2.CV_CAP_PROP_FPS)
 writer = None
 
 # Calculamos el total de frames del video
