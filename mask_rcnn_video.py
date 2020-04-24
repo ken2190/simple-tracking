@@ -28,6 +28,7 @@ net = cv2.dnn.readNetFromTensorflow(weightsPath, configPath)
 
 # Iniciamos la captura del video
 vs = cv2.VideoCapture("videos/Berlin.mp4")
+fps = vs.get(cv2.cv.CV_CAP_PROP_FPS)
 writer = None
 
 # Calculamos el total de frames del video
@@ -105,7 +106,7 @@ while True:
 	if writer is None:
 		# Escribimos en el video de salida
 		fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-		writer = cv2.VideoWriter("output/Berlin_output.avi", fourcc, 30,
+		writer = cv2.VideoWriter("output/Berlin_output.mp4", fourcc, fps,
 			(frame.shape[1], frame.shape[0]), True)
 
 		# Sacamos por pantalla los tiempos estimados
