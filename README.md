@@ -2,6 +2,18 @@
 
 Este trabajo fin de grado se centra en ser capaz de proveer de conocimiento a la "máquina" para que sea capaz de detectar cualquier obstáculo en una situación de conducción, además de determinar si presentan un peligro o no para la carretera.
 
+Los sistemas de videovigilancia automática para el control del tráfico rodado sirven a
+múltiples finalidades. En este caso nos centraremos en la detección de los vehículos que
+circulan por una vía rápida (autovía o autopista), realizando su seguimiento para
+identificar su posición y velocidad. Además el sistema deberá estimar el tipo de vehículo
+del que se trata: motocicleta, turismo, furgoneta o camión. El objetivo es usar toda esta
+información para hacer una estimación del flujo de tráfico en la vía y la contaminación
+generada. Para realizar esta detección se hará uso de redes neuronales
+convolucionales. En particular emplearemos redes que son capaces de detectar
+múltiples objetos en una escena. La programación se realizará en el lenguaje Python,
+empleando bibliotecas de aprendizaje profundo.
+
+
 ## Comenzando 🚀
 
 Para hacer una copia del proyecto en local:
