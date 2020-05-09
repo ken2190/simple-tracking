@@ -1,124 +1,172 @@
-
 # Librerías
-import numpy as np
-import imutils
-import time
 import cv2
+import numpy as np
 import os
+import sys
+import time
+import tensorflow as tf
+
+from mrcnn import utils
+from mrcnn import visualize 
+import mrcnn.model as modellib
+
+sys.path.append(os.path.join("coco"))  # Para acceder a la carpeta de la red coco
+import coco
+
+# Directorio de logs
+MODEL_DIR = os.path.join("logs")
+
+# Archivo de pesos de la red
+COCO_MODEL_PATH = os.path.join("mask_rcnn_coco.h5")
+
+# Descargar el archivo de pesos si no existe
+if not os.path.exists(COCO_MODEL_PATH):
+    utils.download_trained_weights(COCO_MODEL_PATH)
+
+# Cargamos nuestra mascara RCNN y cargamos los pesos en la máscara
+
+model = modellib.MaskRCNN(
+    mode="inference", model_dir=MODEL_DIR, config=config
+)
+model.load_weights(COCO_MODEL_PATH, by_name=True)
 
 
-# Cargamos la máscara R-CNN donde vamos a cargar nuestra red preentrenada
-labelsPath = os.path.sep.join(["mask-rcnn-coco","object_detection_classes_coco.txt"])
-LABELS = open(labelsPath).read().strip().split("\n")
 
-# Inicializamos los colores (random) para representar los diferentes objetos
-np.random.seed(42)
-COLORS = np.random.randint(0, 255, size=(len(LABELS), 3),
-	dtype="uint8")
+# Clases preentrenas en la red coco
 
-# Pasamos los paths de los pesos y configuración
-weightsPath = os.path.sep.join(["mask-rcnn-coco",
-	"frozen_inference_graph.pb"])
-configPath = os.path.sep.join(["mask-rcnn-coco",
-	"mask_rcnn_inception_v2_coco_2018_01_28.pbtxt"])
+class_names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
+               'bus', 'train', 'truck', 'boat', 'traffic light',
+               'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird',
+               'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear',
+               'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
+               'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
+               'kite', 'baseball bat', 'baseball glove', 'skateboard',
+               'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
+               'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
+               'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
+               'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
+               'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
+               'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
+               'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
+               'teddy bear', 'hair drier', 'toothbrush']
 
-# Cargamos nuestra red R-CNN con la base de datos Coco
-print("[INFO] Cargando Mask R-CNN ...")
-net = cv2.dnn.readNetFromTensorflow(weightsPath, configPath)
+# Función que devuelve un color aleatorio
 
-# Iniciamos la captura del video
-vs = cv2.VideoCapture("videos/Malaga.mp4")
-fps = vs.get(cv2.CAP_PROP_FPS)
-writer = None
+def random_colors(N):
+    np.random.seed(1)
+    colors = [tuple(255 * np.random.rand(3)) for _ in range(N)]
+    return colors
+
+
+colors = random_colors(len(class_names))
+class_dict = {
+    name: color for name, color in zip(class_names, colors)
+}
+
+# Función que convoluciona la máscara con las distintas imagenes
+
+def apply_mask(image, mask, color, alpha=0.5):
+    """apply mask to image"""
+    for n, c in enumerate(color):
+        image[:, :, n] = np.where(
+            mask == 1,
+            image[:, :, n] * (1 - alpha) + alpha * c,
+            image[:, :, n]
+        )
+    return image
+
+# Función que pinta en la imagen la caja, etiqueta y probabilidad de lo detectado
+
+def display_instances(image, boxes, masks, ids, names, scores):
+	
+    n_instances = boxes.shape[0]
+
+    if not n_instances:
+        print('NO INSTANCES TO DISPLAY')
+    else:
+        assert boxes.shape[0] == masks.shape[-1] == ids.shape[0]
+
+    for i in range(n_instances):
+        if not np.any(boxes[i]):
+            continue
+
+        y1, x1, y2, x2 = boxes[i]
+        label = names[ids[i]]
+        color = class_dict[label]
+        score = scores[i] if scores is not None else None
+        caption = '{} {:.2f}'.format(label, score) if score else label
+        mask = masks[:, :, i]
+
+        image = apply_mask(image, mask, color)
+        image = cv2.rectangle(image, (x1, y1), (x2, y2), color, 1)
+        image = cv2.putText(
+            image, caption, (x1, y1), cv2.FONT_HERSHEY_COMPLEX, 0.4, color, 1
+             )
+
+    return image
+
+
+# Capturamos el video y guardamos los fps
+
+capture = cv2.VideoCapture("videos/Malaga.mp4")
+
+capture.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
+
+capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+fps = capture.get(cv2.CAP_PROP_FPS)
+
 
 # Calculamos el total de frames del video
+
 try:
-	prop = cv2.cv.CV_CAP_PROP_FRAME_COUNT if imutils.is_cv2() \
-		else cv2.CAP_PROP_FRAME_COUNT
-	total = int(vs.get(prop))
-	print("[INFO] {} Frames totales: ".format(total))
+      prop = cv2.CAP_PROP_FRAME_COUNT
+      total = int(capture.get(prop))
+      print("[INFO] {} Frames totales: ".format(total))
 
 # Exception por si no se pueden recuperar los frames
+
 except:
-	print("[INFO] No se detectó el número de Frames")
-	total = -1
+         print("[INFO] No se detectó el número de Frames")
+         total = -1
 
-# Bucle para cada frame del video
+# Recorremos los frames del video
+
+writer=None
+	
 while True:
-	# Leemos siguiente frame
-	(grabbed, frame) = vs.read()
+	
+    ret, frame = capture.read() # Capturamos frame
 
-	# Si no cogemos el frame continuamos al siguiente (Si procesamos un frame vacío da error, esto es para evitarlo)
-	if not grabbed:
-		break
+    if not ret:
+        break
+	
+    start = time.time()  # Para estimar el tiempo total
 
-	# Construimos una región y vamos pasando la red por ella , nos devuelve los limites de la caja y las coordenadas de los objetos
-	blob = cv2.dnn.blobFromImage(frame, swapRB=True, crop=False)
-	net.setInput(blob)
-	start = time.time()
-	(boxes, masks) = net.forward(["detection_out_final",
-		"detection_masks"])
-	end = time.time()
+# Aplicamos nuestra máscara en el frame
 
-	# Bucle para las distintas clases posibles
-	for i in range(0, boxes.shape[2]):
-		# extraemos el ID de la clase con probabilidad asociada a la predicción
-		classID = int(boxes[0, 0, i, 1])
-		confidence = boxes[0, 0, i, 2]
+    results = model.detect([frame], verbose=0) 
+    r = results[0]
+    frame = display_instances(
+        frame, r['rois'], r['masks'], r['class_ids'], class_names, r['scores']
+    ) 
 
-		# Filtramos las predicciones para que solo obtnegamos las que son más o menos fiables con confianza > 0.3 (Por ejemplo)
-		if confidence > 0.3:
-			# Escalamos las cajas para que se ajusten a la ventana
-			(H, W) = frame.shape[:2]
-			box = boxes[0, 0, i, 3:7] * np.array([W, H, W, H])
-			(startX, startY, endX, endY) = box.astype("int")
-			boxW = endX - startX
-			boxH = endY - startY
+    end = time.time()  # Para estimar el tiempo total
 
-			# Extrae la segmentación en pixeles de los objetos,
-			# redimensionamos la máscara con los límites de las cajas y añadimos un pequeño umbral
-			mask = masks[i, classID]
-			mask = cv2.resize(mask, (boxW, boxH),
-				interpolation=cv2.INTER_NEAREST)
-			mask = (mask > 0.5)
-
-			# Extreamos las regiones de interes
-			roi = frame[startY:endY, startX:endX][mask]
-
-			# Obtenemos los colores de la clase detectada
-			color = COLORS[classID]
-			blended = ((0.4 * color) + (0.6 * roi)).astype("uint8")
-
-			# Almacenamos la región de interés
-			frame[startY:endY, startX:endX][mask] = blended
-
-			# Dibujamos las cajas
-			color = [int(c) for c in color]
-			cv2.rectangle(frame, (startX, startY), (endX, endY),
-				color, 2)
-
-			# Escribimos el nombre de la clase detectada y la probabilidad de la misma
-			text = "{}: {:.4f}".format(LABELS[classID], confidence)
-			cv2.putText(frame, text, (startX, startY - 5),
-				cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-	# Comprobamos si se ha iniciado la captura de video
-	if writer is None:
+    if writer is None:
 		# Escribimos en el video de salida
-		fourcc = cv2.VideoWriter_fourcc(*"MJPG")
-		writer = cv2.VideoWriter("output/Malaga_output.avi", fourcc, fps,
-			(frame.shape[1], frame.shape[0]), True)
+		        fourcc = cv2.VideoWriter_fourcc(*"MJPG")
+	        	writer = cv2.VideoWriter("output/Malaga_output.avi", fourcc, fps,
+	      		(frame.shape[1], frame.shape[0]), True)
+          	
+            	# Sacamos por pantalla los tiempos estimados
+	        	if total > 0:
+	        		elap = (end - start)
+	        		print("[INFO] Tiempo que tarda un frame: {:.4f} s".format(elap))
+	        		print("[INFO] Tiempo estimado: {:.4f}".format(elap * total))
+          
+        # Escribimos en el disco
+    writer.write(frame)
 
-		# Sacamos por pantalla los tiempos estimados
-		if total > 0:
-			elap = (end - start)
-			print("[INFO] Tiempo que tarda un frame: {:.4f} s".format(elap))
-			print("[INFO] Tiempo estimado: {:.4f}".format(
-				elap * total))
-
-	# write the output frame to disk
-	writer.write(frame)
-
-print("[INFO] Limpiando...")
 writer.release()
-vs.release()
+capture.release()
