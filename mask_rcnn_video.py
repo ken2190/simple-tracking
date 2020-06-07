@@ -23,6 +23,15 @@ COCO_MODEL_PATH = os.path.join("mask_rcnn_coco.h5")
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
 
+# Configuramos numero de GPUs e imagenes por CPU
+class InferenceConfig(coco.CocoConfig):
+    # Set batch size to 1 since we'll be running inference on
+    # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 1
+
+config = InferenceConfig()
+
 # Cargamos nuestra mascara RCNN y cargamos los pesos en la máscara
 
 model = modellib.MaskRCNN(
