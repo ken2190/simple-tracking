@@ -49,29 +49,9 @@ $ sudo apt install python3
 $ sudo apt install python3-pip
 ```
 
-
- * Tensorflow
- 
+* Instalar todas las librerías
 ```
-$  pip install tensorflow
-```
-
- * OpenCV
- 
-```
-$  pip install opencv-python
-```
-
- * NumPy
- 
- ```
-$  pip install numpy
-```
- 
- * ImUtils
-
-```
-$  pip install imutils
+$ pip3 install -r requirements.txt
 ```
 
 ### Ejecución 🔧
