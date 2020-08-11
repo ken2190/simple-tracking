@@ -104,7 +104,7 @@ def diff_time (start, end, total):
     if total > 0:
       elap = (end - start)
       print("[INFO] Tiempo que ha tardado el frame: {:.4f} s".format(elap))
-      print("[INFO] Tiempo estimado: {:.4f}".format(elap * total))
+      print("[INFO] Tiempo estimado: {:.4f}".format(elap * total)
 	    
 def draw_lbl(image, box, color, caption, text):
   y1, x1, y2, x2 = box
