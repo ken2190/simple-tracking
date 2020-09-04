@@ -10,11 +10,16 @@ from mrcnn import utils
 from mrcnn import visualize 
 import mrcnn.model as modellib
 
-sys.path.append(os.path.join("coco"))  # Cargamos dataset coco (Common Objects in Context)
+sys.path.append(os.path.join("coco/"))  # Cargamos dataset coco (Common Objects in Context)
 import coco
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--input", required=True, help="path to input image")
+args = vars(parser.parse_args())
+
+
 # Directorio de logs
-MODEL_DIR = os.path.join("logs")
+MODEL_DIR = os.path.join("logs/")
 
 # Ruta del archivo de pesos de la red rcnn
 COCO_MODEL_PATH = os.path.join("mask_rcnn_coco.h5")
@@ -166,8 +171,9 @@ label_cnt = 1
 frm_num = 1
 min_distance = 50
 
-video_in = "videos/Berlin.mp4"
-video_out = "output/Berlin_out.avi"
+input = str(args["input"])
+video_in = "videos/" + input
+video_out = "output/" + input.replace(".mp4", "_out.avi")
 class_detected = 'person' # Detectaremos solo personas
 
 writer = None
