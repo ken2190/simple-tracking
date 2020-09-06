@@ -36,7 +36,7 @@ class InferenceConfig(coco.CocoConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
     # Skip detections with < 95% confidence
-    DETECTION_MIN_CONFIDENCE = 0.9
+    DETECTION_MIN_CONFIDENCE = 0.95
 
 config = InferenceConfig()
 
@@ -165,7 +165,7 @@ def write_vid(writer,frame,video_out, fps):
   return writer
 # Variables previas
 
-n_frame = 8
+n_frame = 16
 ref_n_frame_axies = []
 ref_n_frame_label = []
 ref_n_frame_axies_flatten = []
@@ -236,7 +236,7 @@ while True:
             b = np.array(box)
             idx, dist = distancia(a,b)
 
-            if dist < 50:
+            if dist < min_distance:
               lbl = ref_n_frame_label_flatten[idx]
 
           if (math.isnan(lbl)):
