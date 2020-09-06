@@ -118,9 +118,6 @@ def draw_lbl(image, box, color, caption, text):
   y1, x1, y2, x2 = box
   image = cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
   image = cv2.putText(
-      image, str(caption), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2
-        )
-  image = cv2.putText(
       image ,text , (x2, y2), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2
         )
   return image	  
