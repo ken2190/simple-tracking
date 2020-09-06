@@ -172,7 +172,7 @@ ref_n_frame_axies_flatten = []
 ref_n_frame_label_flatten = []
 label_cnt = 1
 frm_num = 1
-min_distance = 150
+min_distance = 50
 
 input = str(args["input"])
 video_in = "videos/" + input
