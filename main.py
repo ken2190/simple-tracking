@@ -35,6 +35,8 @@ class InferenceConfig(coco.CocoConfig):
     # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
+    # Skip detections with < 95% confidence
+    DETECTION_MIN_CONFIDENCE = 0.95
 
 config = InferenceConfig()
 
